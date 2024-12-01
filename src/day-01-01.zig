@@ -10,54 +10,59 @@ const ArrayList = std.ArrayList;
 pub fn main() !void {
     std.debug.print("Day 1 of advent of code\n", .{});
 
+    const stdin = std.io.getStdIn().reader();
+    const stat = try std.io.getStdIn().stat();
+
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
 
-    const input =
-        \\3   4
-        \\4   3
-        \\2   5
-        \\1   3
-        \\3   9
-        \\3   3
-    ;
-
     // Set up array lists to store data
-    var left = ArrayList(u16).init(allocator);
-    var right = ArrayList(u16).init(allocator);
+    var left = ArrayList(u64).init(allocator);
+    var right = ArrayList(u64).init(allocator);
 
-    // Split the input into lines
-    var lineIter = std.mem.split(u8, input, "\n");
+    switch (stat.kind) {
+        std.fs.Dir.Entry.Kind.named_pipe => {
+            while (try stdin.readUntilDelimiterOrEofAlloc(allocator, '\n', 4096)) |line| {
+                const trimmed_line = std.mem.trimRight(u8, line, "\n");
+                std.debug.print("'{s}'\n", .{trimmed_line});
 
-    // Iterate over each line to build left and right arrays
-    while (lineIter.next()) |line| {
-        var rowIter = std.mem.split(u8, line, "   ");
+                var lineIter = std.mem.splitSequence(u8, trimmed_line, "   ");
 
-        // Read first number
-        const leftInt = try std.fmt.parseInt(u16, rowIter.next().?, 10);
-        try left.append(leftInt);
+                const leftString = lineIter.next().?;
+                std.debug.print("'{s}'\n", .{leftString});
+                const leftInt = try std.fmt.parseInt(u64, leftString, 10);
+                std.debug.print("'{d}'\n", .{leftInt});
+                try left.append(leftInt);
 
-        // Read second number
-        const rightInt = try std.fmt.parseInt(u16, rowIter.next().?, 10);
-        try right.append(rightInt);
+                const rightString = lineIter.next().?;
+                std.debug.print("'{s}'\n", .{rightString});
+                const rightInt = try std.fmt.parseInt(u64, rightString, 10);
+                try right.append(rightInt);
+            }
+        },
+        else => {
+            return;
+        },
     }
 
     const leftArray = try left.toOwnedSlice();
     const rightArray = try right.toOwnedSlice();
 
-    std.mem.sort(u16, leftArray, {}, std.sort.asc(u16));
-    std.mem.sort(u16, rightArray, {}, std.sort.asc(u16));
+    std.mem.sort(u64, leftArray, {}, std.sort.asc(u64));
+    std.mem.sort(u64, rightArray, {}, std.sort.asc(u64));
 
-    var totalDifference: u16 = 0;
+    var totalDifference: u64 = 0;
 
     for (leftArray, 0..) |leftValue, index| {
         const rightValue = rightArray[index];
 
-        const difference = rightValue - leftValue;
+        std.debug.print("{d} - {d}\n", .{ rightValue, leftValue });
+        const difference = if (leftValue < rightValue) rightValue - leftValue else leftValue - rightValue;
 
         totalDifference += difference;
+
         std.debug.print("Index: {} Left: {} Right: {} Difference {}\n", .{ index, leftValue, rightValue, difference });
     }
 
-    std.debug.print("Total Difference: {}", .{totalDifference});
+    std.debug.print("Total Difference: {}\n", .{totalDifference});
 }
