@@ -1,6 +1,7 @@
 const std = @import("std");
 
 const ArrayList = std.ArrayList;
+
 // Steps to solving this problem
 // 1. Split the input into two arrays
 // 2. Sort each array
@@ -46,12 +47,17 @@ pub fn main() !void {
 
     std.mem.sort(u16, leftArray, {}, std.sort.asc(u16));
     std.mem.sort(u16, rightArray, {}, std.sort.asc(u16));
-    // For testing
-    for (leftArray) |row| {
-        std.debug.print("Left {d}\n", .{row});
+
+    var totalDifference: u16 = 0;
+
+    for (leftArray, 0..) |leftValue, index| {
+        const rightValue = rightArray[index];
+
+        const difference = rightValue - leftValue;
+
+        totalDifference += difference;
+        std.debug.print("Index: {} Left: {} Right: {} Difference {}\n", .{ index, leftValue, rightValue, difference });
     }
 
-    for (rightArray) |row| {
-        std.debug.print("Right {d}\n", .{row});
-    }
+    std.debug.print("Total Difference: {}", .{totalDifference});
 }
