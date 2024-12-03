@@ -2,16 +2,8 @@ const std = @import("std");
 
 const ArrayList = std.ArrayList;
 
-// Steps to solving this problem
-// 1. Split the input into two arrays
-// 2. Sort each array
-// 3. Iterate over each sorted array and sum their differences
-
-// Part 2
-// When iterating over the
-
 pub fn main() !void {
-    std.debug.print("Day 1 of advent of code\n", .{});
+    std.debug.print("Day 2 of advent of code\n", .{});
 
     const stdin = std.io.getStdIn().reader();
     const stat = try std.io.getStdIn().stat();
@@ -21,70 +13,66 @@ pub fn main() !void {
 
     var totalSafe: u16 = 0;
 
-    switch (stat.kind) {
-        std.fs.Dir.Entry.Kind.named_pipe => {
-            while (try stdin.readUntilDelimiterOrEofAlloc(allocator, '\n', 4096)) |buff| {
-                const line = getLine(buff);
-                var list = try getArrayList(allocator, line);
+    if (stat.kind != std.fs.Dir.Entry.Kind.named_pipe) {
+        return;
+    }
+    while (try stdin.readUntilDelimiterOrEofAlloc(allocator, '\n', 4096)) |buff| {
+        const line = getLine(buff);
+        var list = try getArrayList(allocator, line);
 
-                const array = try list.toOwnedSlice();
+        const array = try list.toOwnedSlice();
 
-                std.debug.print("{any}: ", .{array});
-                const isSafe = lineIsSafeV1(array);
+        std.debug.print("{any}: ", .{array});
+        const isSafe = lineIsSafeV1(array);
 
-                if (isSafe) {
-                    std.debug.print("Safe\n", .{});
-                    totalSafe += 1;
+        if (isSafe) {
+            std.debug.print("Safe\n", .{});
+            totalSafe += 1;
+            continue;
+        }
+        std.debug.print("Not Safe: Skipping ", .{});
+        // Mask one item and see if it will work.
+        for (0..array.len) |skip| {
+            var first = true;
+            var asc = true;
+            var safe = true;
+            const start: usize = if (skip == 0) 1 else 0;
+            var last = array[start];
+
+            for (array[0..], 0..) |number, index| {
+                if (skip == index or index == start) {
+                    std.debug.print("{d}:{d}, ", .{ index, number });
+
                     continue;
                 }
-                std.debug.print("Not Safe: Skipping ", .{});
-                // Mask one item and see if it will work.
-                for (0..array.len) |skip| {
-                    var first = true;
-                    var asc = true;
-                    var safe = true;
-                    const start: usize = if (skip == 0) 1 else 0;
-                    var last = array[start];
 
-                    for (array[0..], 0..) |number, index| {
-                        if (skip == index or index == start) {
-                            std.debug.print("{d}:{d}, ", .{ index, number });
+                const diff = number - last;
 
-                            continue;
-                        }
-
-                        const diff = number - last;
-
-                        if (first) {
-                            first = false;
-                            asc = diff > 0;
-                        }
-
-                        const absDiff = @abs(diff);
-
-                        if ((absDiff < 1 or absDiff > 3) or (asc and diff < 0) or (!asc and diff > 0)) {
-                            safe = false;
-                            break;
-                        }
-
-                        last = number;
-                    }
-
-                    if (safe) {
-                        std.debug.print("Safe\n", .{});
-                        totalSafe += 1;
-                        break;
-                    }
-
-                    if (skip == array.len - 1) {
-                        std.debug.print("Not Safe\n", .{});
-                    }
+                if (first) {
+                    first = false;
+                    asc = diff > 0;
                 }
+
+                const absDiff = @abs(diff);
+
+                if ((absDiff < 1 or absDiff > 3) or (asc and diff < 0) or (!asc and diff > 0)) {
+                    safe = false;
+                    break;
+                }
+
+                last = number;
             }
-        },
-        else => {
-            return;
-        },
+
+            if (safe) {
+                std.debug.print("Safe\n", .{});
+                totalSafe += 1;
+                break;
+            }
+
+            if (skip == array.len - 1) {
+                std.debug.print("Not Safe\n", .{});
+            }
+        }
     }
     std.debug.print("Total Safe: {d}\n", .{totalSafe});
 }
