@@ -120,49 +120,6 @@ pub fn lineIsSafeV1(numbers: []i32) bool {
     return safe;
 }
 
-// pub fn lineIsSafeV2(line: []const u8) !bool {
-//     std.debug.print("{s}: ", .{line});
-//     var safe: bool = true;
-//     var asc: bool = true;
-//     var first: bool = true;
-//     var altered: bool = false;
-
-//     var lineIter = std.mem.splitSequence(u8, line, " ");
-
-//     var last: i16 = try std.fmt.parseInt(i16, lineIter.next().?, 10);
-
-//     var numbers = ArrayList(i16).init(allocator);
-
-//     while (lineIter.next()) |text| {
-//         const number = try std.fmt.parseInt(i16, text, 10);
-
-//         if (first) {
-//             asc = number > last;
-//         }
-
-//         const isSafe = isSafeReading(last, number, asc);
-
-//         if (isSafe) {
-//             last = number;
-//             continue;
-//         }
-
-//         if (altered) {
-//             std.debug.print("Breaking: Not Safe\n", .{});
-//             safe = false;
-//             break;
-//         }
-
-//         if (first) {
-//             first = false;
-//         }
-
-//         altered = true;
-//     }
-
-//     return safe;
-// }
-
 pub fn isSafeReading(num1: i16, num2: i16, asc: bool) bool {
     const diff = num2 - num1;
     const absDiff = @abs(diff);
