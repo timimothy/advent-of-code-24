@@ -19,8 +19,6 @@ pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
 
-    // const grid = Grid.init(allocator);
-
     var grid2 = std.ArrayList(std.ArrayList(u8)).init(allocator);
 
     while (try stdin.readUntilDelimiterOrEofAlloc(allocator, '\n', 4096)) |line| {
