@@ -8,19 +8,6 @@ const std = @import("std");
 //      Stopping if out of bounds or cell does not contribute to spelling
 //      XMAS.
 
-const Row = struct {};
-
-const Grid = struct {
-    allocator: std.mem.Allocator,
-    rows: std.ArrayList(Row),
-
-    const Self = @This();
-
-    pub fn init(allocator: std.mem.Allocator) Self {
-        return Grid{ .allocator = allocator, .row = std.ArrayList(Row).init(allocator) };
-    }
-};
-
 pub fn main() !void {
     const stdin = std.io.getStdIn().reader();
     const stat = try std.io.getStdIn().stat();
@@ -71,11 +58,16 @@ fn count_xmas(grid: *std.ArrayList(std.ArrayList(u8))) u16 {
     var total: u16 = 0;
 
     for (grid.items, 0..) |row, y| {
-        for (row.items, 0..) |_, x| {
-            const result = scan_for_xmas(grid, x, y, x_size, y_size);
+        for (row.items, 0..) |char, x| {
+            const result = is_x_mas(grid, x, y, x_size, y_size);
 
-            total += result;
-            std.debug.print("{d}", .{result});
+            if (result) {
+                total += 1;
+
+                std.debug.print("{c}", .{char});
+            } else {
+                std.debug.print(".", .{});
+            }
         }
         std.debug.print("\n", .{});
     }
@@ -111,13 +103,13 @@ fn scan_for_xmas(grid: *std.ArrayList(std.ArrayList(u8)), startX: usize, startY:
     return count;
 }
 
-fn scan_for_xmas_in_direction(grid: *std.ArrayList(std.ArrayList(u8)), startX: usize, startY: usize, maxX: usize, maxY: usize, direction: Direction) u16 {
+fn scan_for_xmas_in_direction(grid: *std.ArrayList(std.ArrayList(u8)), pos_x: usize, pos_y: usize, maxX: usize, maxY: usize, direction: Direction) u16 {
     var correct: u16 = 0;
-    var xCursor = startX;
-    var yCursor = startY;
+    var xCursor = pos_x;
+    var yCursor = pos_y;
 
     while (correct < 4 and xCursor < maxX and yCursor < maxY) {
-        const char = grid.items[yCursor].items[xCursor];
+        const char = get_grid_value(grid, pos_x, pos_y);
 
         if (xmas[correct] != char) return 0;
 
@@ -139,4 +131,30 @@ fn scan_for_xmas_in_direction(grid: *std.ArrayList(std.ArrayList(u8)), startX: u
     }
 
     return if (correct == 4) 1 else 0;
+}
+
+const Grid = std.ArrayList(std.ArrayList(u8));
+
+fn is_x_mas(grid: *Grid, pos_x: usize, pos_y: usize, max_x: usize, max_y: usize) bool {
+    if (pos_x == 0 or pos_x == (max_x - 1)) return false;
+    if (pos_y == 0 or pos_y == (max_y - 1)) return false;
+
+    const char = get_grid_value(grid, pos_x, pos_y);
+
+    if (char != 'A') return false;
+
+    const ne_char = get_grid_value(grid, pos_x + 1, pos_y - 1);
+    const sw_char = get_grid_value(grid, pos_x - 1, pos_y + 1);
+    const first = ne_char == 'M' and sw_char == 'S' or ne_char == 'S' and sw_char == 'M';
+
+    const nw_char = get_grid_value(grid, pos_x - 1, pos_y - 1);
+    const se_char = get_grid_value(grid, pos_x + 1, pos_y + 1);
+
+    const second = nw_char == 'M' and se_char == 'S' or nw_char == 'S' and se_char == 'M';
+
+    return first and second;
+}
+
+fn get_grid_value(grid: *Grid, x: usize, y: usize) u8 {
+    return grid.items[y].items[x];
 }
