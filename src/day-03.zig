@@ -72,7 +72,7 @@ test "check if string is valid" {
 fn process_string(alloc: std.mem.Allocator, input: []const u8) u32 {
     var total: u32 = 0;
     var cursor: usize = 0;
-    //  std.debug.print("process\n", .{});
+
     while (cursor < input.len) {
         std.debug.print("cursor pos {d} {c}\n", .{ cursor, input[cursor] });
         const start = std.mem.indexOfPos(u8, input, cursor, "mul(") orelse {
@@ -81,7 +81,6 @@ fn process_string(alloc: std.mem.Allocator, input: []const u8) u32 {
         };
 
         const ending = std.mem.indexOfPos(u8, input, start + 4, ")") orelse break;
-        //    std.debug.print("{s}\n", .{input[start..ending]});
 
         var numberIter = std.mem.splitSequence(u8, input[start + 4 .. ending], ",");
 
