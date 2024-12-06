@@ -1,5 +1,11 @@
 const std = @import("std");
 
+pub const Guard = struct {
+    direction: Direction,
+    x: usize,
+    y: usize,
+};
+
 pub const Cell = struct {
     touched: bool = false,
     blocked: bool,
@@ -7,25 +13,65 @@ pub const Cell = struct {
 
 const Err = error{Err};
 
+pub const Direction = enum { s, n, w, e, none };
+
 pub const Grid = struct {
     const Self = @This();
 
+    allocator: std.mem.Allocator,
     cells: *std.ArrayList(*Cell),
+    guard: ?*Guard,
 
     x_dim: usize = 0,
     y_dim: usize = 0,
 
-    pub fn init(alloc: std.mem.Allocator) !Self {
+    pub fn init(alloc: std.mem.Allocator, input: []const u8) !Self {
         const cell_array = try alloc.create(std.ArrayList(*Cell));
         cell_array.* = std.ArrayList(*Cell).init(alloc);
 
-        return Self{
+        var data = Self{
+            .allocator = alloc,
             .cells = cell_array,
+            .guard = null,
         };
+
+        try data.process_input(input);
+
+        return data;
     }
 
-    pub fn add_cell(self: *Self, cell: *Cell) !void {
-        try self.cells.append(cell);
+    fn process_input(self: *Self, input: []const u8) !void {
+        var row_iter = std.mem.splitSequence(u8, input, "\n");
+        while (row_iter.next()) |row| {
+            if (self.y_dim == 0) {
+                self.x_dim = row.len;
+            }
+
+            for (row, 0..) |char, x_pos| {
+                var blocked = false;
+
+                switch (char) {
+                    '#' => {
+                        blocked = true;
+                    },
+                    '.' => {},
+                    else => {
+                        if (self.guard == null) {
+                            const direction = get_direction(char);
+                            const guard_ptr = try self.allocator.create(Guard);
+                            guard_ptr.* = Guard{ .direction = direction, .x = x_pos, .y = self.y_dim };
+                            self.guard = guard_ptr;
+                        }
+                    },
+                }
+
+                const cell_ptr = try self.allocator.create(Cell);
+                cell_ptr.* = .{ .blocked = blocked, .touched = false };
+                try self.cells.append(cell_ptr);
+            }
+
+            self.y_dim += 1;
+        }
     }
 
     pub fn get_cell(self: *Self, x: usize, y: usize) Err!*Cell {
@@ -39,3 +85,13 @@ pub const Grid = struct {
         return self.cells.items[@intCast(pos)];
     }
 };
+
+fn get_direction(char: u8) Direction {
+    return switch (char) {
+        '^' => Direction.n,
+        '<' => Direction.w,
+        '>' => Direction.e,
+        'V' => Direction.s,
+        else => unreachable,
+    };
+}
