@@ -58,6 +58,22 @@ const PageRules = struct {
     }
 };
 
+const Sorter = struct {
+    const Self = @This();
+
+    rules: *PageRules,
+
+    pub fn compare(self: Self, lhs: u16, rhs: u16) bool {
+        const l_rules = self.rules.ruleMap.getPtr(lhs) orelse return false;
+
+        for (l_rules.items) |item| {
+            if (item == rhs) return true;
+        }
+
+        return false;
+    }
+};
+
 pub fn main() !void {
     print("Advent of Code: Day 5\n", .{});
 
@@ -87,9 +103,10 @@ pub fn main() !void {
     }
 
     if (inputIter.next()) |raw_updates| {
-        const correct = try process_updates(allocator, raw_updates, &page_rules);
+        const result = try process_updates(allocator, raw_updates, &page_rules);
 
-        print("correct: {d}", .{correct});
+        print("correct: {d}\n", .{result[0]});
+        print("incorrect: {d}\n", .{result[1]});
     }
 }
 
@@ -101,10 +118,13 @@ fn populate_page_rules(rules: *PageRules, text: []const u8) !void {
     }
 }
 
-fn process_updates(alloc: std.mem.Allocator, raw_update_string: []const u8, rules: *PageRules) !u16 {
+fn process_updates(alloc: std.mem.Allocator, raw_update_string: []const u8, rules: *PageRules) !struct { u16, u16 } {
     var update_iter = std.mem.splitSequence(u8, raw_update_string, "\n");
 
     var correct: u16 = 0;
+    var incorrect: u16 = 0;
+    const sorter = Sorter{ .rules = rules };
+
     while (update_iter.next()) |update_string| {
         if (update_string.len == 0) break;
         const array = try get_array_from_text(alloc, update_string);
@@ -117,10 +137,14 @@ fn process_updates(alloc: std.mem.Allocator, raw_update_string: []const u8, rule
             correct += array.items[middleIndex];
         } else {
             print("not valid: {any}\n", .{array.items});
+            std.mem.sort(u16, array.items, sorter, comptime Sorter.compare);
+            print("sorted: {any}\n", .{array.items});
+            const middleIndex = @divTrunc(array.items.len, 2);
+            incorrect += array.items[middleIndex];
         }
     }
 
-    return correct;
+    return .{ correct, incorrect };
 }
 
 fn get_array_from_text(alloc: std.mem.Allocator, text: []const u8) !std.ArrayList(u16) {
