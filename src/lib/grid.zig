@@ -4,11 +4,22 @@ pub const Guard = struct {
     direction: Direction,
     x: usize,
     y: usize,
+    x_default: usize,
+    y_default: usize,
+    direction_default: Direction,
+
+    pub fn reset(self: *Guard) void {
+        self.x = self.x_default;
+        self.y = self.y_default;
+        self.direction = self.direction_default;
+    }
 };
 
 pub const Cell = struct {
     touched: bool = false,
     blocked: bool,
+    x: usize,
+    y: usize,
 };
 
 const Err = error{Err};
@@ -59,14 +70,14 @@ pub const Grid = struct {
                         if (self.guard == null) {
                             const direction = get_direction(char);
                             const guard_ptr = try self.allocator.create(Guard);
-                            guard_ptr.* = Guard{ .direction = direction, .x = x_pos, .y = self.y_dim };
+                            guard_ptr.* = Guard{ .direction = direction, .x = x_pos, .y = self.y_dim, .y_default = self.y_dim, .x_default = x_pos, .direction_default = direction };
                             self.guard = guard_ptr;
                         }
                     },
                 }
 
                 const cell_ptr = try self.allocator.create(Cell);
-                cell_ptr.* = .{ .blocked = blocked, .touched = false };
+                cell_ptr.* = .{ .blocked = blocked, .touched = false, .x = x_pos, .y = self.y_dim };
                 try self.cells.append(cell_ptr);
             }
 
@@ -77,7 +88,6 @@ pub const Grid = struct {
     pub fn get_cell(self: *Self, x: usize, y: usize) Err!*Cell {
         const block: i16 = @as(i16, @intCast(y)) * @as(i16, @intCast(self.x_dim));
         const pos: i16 = block + @as(i16, @intCast(x));
-        std.debug.print("getting cell for: {} {} {} {}\n", .{ x, y, block, (x) });
 
         if (pos > self.cells.items.len) {
             return Err.Err;

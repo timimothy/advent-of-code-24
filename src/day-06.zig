@@ -65,8 +65,67 @@ pub fn main() !void {
         }
     }
 
-    print("Count: {}", .{count});
+    print("Count: {}\n", .{count});
+
+    var loop_count: u16 = 0;
+    // Iterate over each cell
+    for (map.cells.items) |cell| {
+        // Only need to block the path where the guard had traveled.
+        if (!cell.touched or cell.x == guard.x_default and cell.y == guard.y_default) continue;
+        cell.blocked = true;
+        //  print("Blocking: {}\n", .{cell});
+        guard.reset();
+        update_mod(&mod, guard.direction);
+
+        var hashMap = std.AutoHashMap(Coord, void).init(allocator);
+        defer hashMap.deinit();
+
+        var loop = false;
+
+        while (guard.x >= 0 and guard.x <= (map.x_dim - 1) and 0 <= guard.y and guard.y <= (map.y_dim - 1) and !loop) {
+            if (guard.x == 0 and mod.x < 0 or guard.y == 0 and mod.y < 0) {
+                break;
+            }
+
+            if (guard.x == map.x_dim and mod.x >= 0 or guard.y == map.y_dim - 1 and mod.y >= 0) {
+                break;
+            }
+
+            var turn = false;
+
+            while ((map.get_cell(@intCast(@as(i16, @intCast(guard.x)) + mod.x), @intCast(@as(i16, @intCast(guard.y)) + mod.y)) catch unreachable).blocked) {
+                guard.direction = turn_right_90(guard.direction);
+                update_mod(&mod, guard.direction);
+                turn = true;
+            }
+
+            if (turn) {
+                const pos = Coord{ .x = guard.x, .y = guard.y };
+                const contains = hashMap.contains(pos);
+
+                if (contains) {
+                    loop = true;
+                    break;
+                }
+
+                try hashMap.put(pos, {});
+            }
+
+            guard.x = @intCast(@as(i16, @intCast(guard.x)) + mod.x);
+            guard.y = @intCast(@as(i16, @intCast(guard.y)) + mod.y);
+        }
+
+        if (loop) {
+            loop_count += 1;
+        }
+
+        cell.blocked = false;
+    }
+
+    print("Count: {}\n", .{loop_count});
 }
+
+const Coord = struct { x: usize, y: usize };
 
 const Error = error{Std};
 
