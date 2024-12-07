@@ -14,53 +14,64 @@ pub fn main() !void {
     var line_iter = std.mem.splitSequence(u8, input, "\n");
 
     var total_calibration_result: u128 = 0;
+
+    // Array of numbers to process from input
+    var numbers = std.ArrayList(u128).init(allocator);
+    defer numbers.deinit();
+
+    // Mask array to populate to determine which operator to use
+    var mask = std.ArrayList(u8).init(allocator);
+    defer mask.deinit();
+
     while (line_iter.next()) |line| {
         print("{s}\n", .{line});
         const semi_index = std.mem.indexOf(u8, line, ":") orelse unreachable;
-
         const test_value = try get_number_from_str(line[0..semi_index]);
 
-        var numbers = std.ArrayList(u128).init(allocator);
-        defer numbers.deinit();
-        var mask = std.ArrayList(u8).init(allocator);
-        defer mask.deinit();
+        // Clear numbers
+        numbers.clearAndFree();
 
+        // Populate numbers array with numbers from input string
         try populate_array_list_with_number_string(&numbers, line[semi_index + 2 ..]);
 
         // Possible iterations for the symbols
+        // Solution 1: 2 * number of white spaces
+        // Solution 2: 3 * number of white spaces
         for (0..(std.math.pow(usize, 3, numbers.items.len - 1))) |index| {
+            // Total of the current mask
             var total: u128 = numbers.items[0];
 
+            // Clear the current mask
             mask.clearAndFree();
 
+            // Convert the current iteration to a base 3 mask
             try to_base_3(&mask, index, numbers.items.len - 1);
 
-            //      print("Mask: {any}\n", .{mask.items});
+            // Iterate over each number position
             for (0..numbers.items.len - 1) |pos| {
+                // Get the mask value to determine the operation
                 switch (mask.items[pos]) {
                     1 => total = join_numbers(total, numbers.items[pos + 1]) catch unreachable,
                     0 => total *= numbers.items[pos + 1],
                     2 => total += numbers.items[pos + 1],
-
-                    else => |char| {
-                        print("{c}\n", .{char});
-                    },
+                    else => unreachable,
                 }
 
+                // If we have exceeded the test value break early
                 if (total > test_value) {
                     break;
                 }
             }
 
+            // If the total matches the test value update the calibration result
             if (total == test_value) {
-                //             print("{d}\n", .{test_value});
                 total_calibration_result += test_value;
                 break;
             }
         }
     }
 
-    print("Total Calivration Result: {}\n", .{total_calibration_result});
+    print("Total Calibration Result: {}\n", .{total_calibration_result});
 }
 
 fn get_number_from_str(str: []const u8) !u128 {
@@ -101,14 +112,7 @@ fn to_base_3(array: *std.ArrayList(u8), value: usize, pad: usize) !void {
 }
 
 fn join_numbers(num1: u128, num2: u128) !u128 {
-    var mag: usize = 1;
-    var pow: u64 = 10;
-    while (@divFloor(num2, pow) > 0) {
-        pow = std.math.pow(u64, 10, mag);
-        mag += 1;
-    }
-
-    const join = (num1 * pow) + num2;
-
-    return join;
+    var buff: [32]u8 = undefined;
+    const printed = try std.fmt.bufPrint(&buff, "{}{}", .{ num1, num2 });
+    return try std.fmt.parseInt(u128, printed, 10);
 }
