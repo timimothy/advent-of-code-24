@@ -72,8 +72,13 @@ pub fn main() !void {
     for (map.cells.items) |cell| {
         // Only need to block the path where the guard had traveled.
         if (!cell.touched or cell.x == guard.x_default and cell.y == guard.y_default) continue;
+
         cell.blocked = true;
-        //  print("Blocking: {}\n", .{cell});
+
+        for (map.cells.items) |reset_cell| {
+            reset_cell.traveled = false;
+        }
+
         guard.reset();
         update_mod(&mod, guard.direction);
 
@@ -83,6 +88,9 @@ pub fn main() !void {
         var loop = false;
 
         while (guard.x >= 0 and guard.x <= (map.x_dim - 1) and 0 <= guard.y and guard.y <= (map.y_dim - 1) and !loop) {
+            const current_cell = map.get_cell(guard.x, guard.y) catch unreachable;
+
+            current_cell.traveled = true;
             if (guard.x == 0 and mod.x < 0 or guard.y == 0 and mod.y < 0) {
                 break;
             }
@@ -117,6 +125,8 @@ pub fn main() !void {
 
         if (loop) {
             loop_count += 1;
+            //  print_map(map);
+            //    break;
         }
 
         cell.blocked = false;
@@ -177,7 +187,7 @@ fn print_map(map: *grid.Grid) void {
             print("\n", .{});
         }
 
-        const char: u8 = if (cell.touched) 'X' else if (cell.blocked) '#' else '.';
+        const char: u8 = if (cell.traveled) 'X' else if (cell.blocked) '#' else '.';
         print("{c}", .{char});
     }
 }

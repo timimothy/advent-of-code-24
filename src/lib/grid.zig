@@ -17,6 +17,7 @@ pub const Guard = struct {
 
 pub const Cell = struct {
     touched: bool = false,
+    traveled: bool = false,
     blocked: bool,
     x: usize,
     y: usize,
