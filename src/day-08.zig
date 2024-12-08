@@ -56,43 +56,38 @@ pub fn main() !void {
         // total += combinations;
         for (array.items[0 .. array.items.len - 1], 0..) |cell_a, index| {
             print("{}\n", .{cell_a.*});
+            try locations.put(cell_a.*, {});
             for (index + 1..array.items.len) |cursor| {
                 const cell_b = array.items[cursor];
-
-                print("\t{}\n", .{cell_b.*});
+                try locations.put(cell_b.*, {});
 
                 const dx: i16 = (@as(i16, @intCast(cell_b.x)) - @as(i16, @intCast(cell_a.x)));
                 const dy: i16 = (@as(i16, @intCast(cell_b.y)) - @as(i16, @intCast(cell_a.y)));
-                print("\tantinodes", .{});
-                if (get_antinode(
-                    cell_a,
-                    -dx,
-                    -dy,
-                    max_x,
-                    line_count,
-                ) catch null) |antinode| {
-                    if (!locations.contains(antinode)) {
-                        try locations.put(antinode, {});
-                        print("\t{}", .{antinode});
-                    } else {
-                        print("\talready contains", .{});
-                    }
-                }
 
-                if (get_antinode(
-                    cell_b,
+                var antinode_start = cell_b.*;
+                while (get_antinode(
+                    &antinode_start,
                     dx,
                     dy,
                     max_x,
                     line_count,
-                ) catch null) |antinode| {
-                    if (!locations.contains(antinode)) {
-                        try locations.put(antinode, {});
-                        print("\t{}", .{antinode});
-                    } else {
-                        print("\talready contains", .{});
-                    }
+                ) catch null) |result| {
+                    try locations.put(result, {});
+                    antinode_start = result;
                 }
+
+                antinode_start = cell_a.*;
+                while (get_antinode(
+                    &antinode_start,
+                    -dx,
+                    -dy,
+                    max_x,
+                    line_count,
+                ) catch null) |result| {
+                    try locations.put(result, {});
+                    antinode_start = result;
+                }
+
                 print("\n", .{});
             }
             //print("\n", .{});
