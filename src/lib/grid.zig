@@ -25,8 +25,6 @@ pub const Cell = struct {
 
 const Err = error{Err};
 
-pub const Direction = enum { s, n, w, e, none };
-
 pub const Grid = struct {
     const Self = @This();
 

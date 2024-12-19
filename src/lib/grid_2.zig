@@ -27,6 +27,9 @@ pub fn Grid(comptime grid_type: type) type {
         }
 
         pub fn get_cell(self: *Self, x: usize, y: usize) Err!grid_type {
+            if (x >= self.x_dim) return Err.Err;
+            if (y >= self.y_dim) return Err.Err;
+
             const block: i16 = @as(i16, @intCast(y)) * @as(i16, @intCast(self.x_dim));
             const pos: i16 = block + @as(i16, @intCast(x));
 
