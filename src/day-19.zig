@@ -27,8 +27,7 @@ pub fn main() !void {
 
     var count: u16 = 0;
     while (input_iter.next()) |pattern| {
-        var cache = std.AutoHashMap(usize, u32).init(allocator);
-        const valid = try is_valid(&patterns, &cache, &pattern, 0);
+        const valid = try is_valid(&patterns, &pattern, 0);
 
         if (valid) count += 1;
     }
@@ -36,18 +35,7 @@ pub fn main() !void {
     print("{}\n", .{count});
 }
 
-fn is_valid(
-    patterns: *std.ArrayList([]const u8),
-    cache: *std.AutoHashMap(usize, u32),
-    pattern: *[]const u8,
-    pos: usize,
-) !bool {
-    const existing_result = cache.get(pos);
-
-    if (existing_result != null) {
-        return existing_result.?;
-    }
-
+fn is_valid(patterns: *std.ArrayList([]const u8), pattern: *[]const u8, pos: usize) !bool {
     // print("{d} {d}\n", .{ pos, pattern.len });
     if (pattern.len == pos) return true;
 
